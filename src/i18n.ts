@@ -41,7 +41,7 @@ export class I18nMiddleware implements Middleware {
     const metaLocale = msg.metadata?.locale;
     if (typeof metaLocale === "string" && metaLocale) return metaLocale;
 
-    const senderLocale = (msg.sender as Record<string, unknown>).locale;
+    const senderLocale = (msg.sender as unknown as Record<string, unknown>).locale;
     if (typeof senderLocale === "string" && senderLocale) return senderLocale;
 
     return undefined;
