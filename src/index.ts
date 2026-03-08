@@ -7,6 +7,8 @@ export type { ChannelAdapter } from "./adapter.js";
 export { ChannelManager } from "./manager.js";
 export type { Middleware } from "./middleware.js";
 export { AccessMiddleware, CommandMiddleware } from "./middleware.js";
+export { RateLimitMiddleware } from "./ratelimit.js";
+export type { RateLimitConfig } from "./ratelimit.js";
 export { ServiceBridge, parseFlags } from "./bridge.js";
 export type { CommandHandler } from "./bridge.js";
 export { loadConfig, interpolateEnv, parseSimpleYaml } from "./config.js";
@@ -22,6 +24,22 @@ export { RichReply } from "./rich.js";
 // Streaming
 export { StreamingMiddleware, StreamingReply } from "./streaming.js";
 export type { StreamingMiddlewareOptions } from "./streaming.js";
+
+// I18n
+export { I18nMiddleware } from "./i18n.js";
+export type { Translations, TranslateFn, I18nOptions } from "./i18n.js";
+
+// Dashboard
+export { Dashboard } from "./dashboard.js";
+export type { DashboardOptions } from "./dashboard.js";
+
+// Scheduler
+export { Scheduler, parseCron, cronMatches } from "./scheduler.js";
+export type { TaskCallback, ScheduledTask } from "./scheduler.js";
+
+// Queue
+export { InMemoryQueue, QueueMiddleware, QueueProcessor } from "./queue.js";
+export type { MessageQueue, QueueOptions } from "./queue.js";
 
 // Adapters — lazy-loaded, import individually:
 //   import { TelegramAdapter } from "unified-channel/adapters/telegram"
