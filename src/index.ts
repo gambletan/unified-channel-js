@@ -41,6 +41,10 @@ export type { TaskCallback, ScheduledTask } from "./scheduler.js";
 export { InMemoryQueue, QueueMiddleware, QueueProcessor } from "./queue.js";
 export type { MessageQueue, QueueOptions } from "./queue.js";
 
+// Voice
+export { VoiceMiddleware, OpenAISTT, OpenAITTS } from "./voice.js";
+export type { STTProvider, TTSProvider, VoiceMiddlewareOptions } from "./voice.js";
+
 // Adapters — lazy-loaded, import individually:
 //   import { TelegramAdapter } from "unified-channel/adapters/telegram"
 export { TelegramAdapter } from "./adapters/telegram.js";
