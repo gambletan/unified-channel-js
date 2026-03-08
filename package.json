@@ -1,0 +1,98 @@
+{
+  "name": "unified-channel",
+  "version": "0.1.0",
+  "description": "Unified message middleware for Node.js — 19 channels, 1 API",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": "./dist/index.js",
+    "./adapters/*": "./dist/adapters/*.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "keywords": [
+    "telegram",
+    "discord",
+    "slack",
+    "whatsapp",
+    "imessage",
+    "bot",
+    "messaging",
+    "middleware",
+    "chat"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/gambletan/unified-channel-js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "devDependencies": {
+    "@types/node": "^25.3.5",
+    "typescript": "^5.5",
+    "vitest": "^2.0"
+  },
+  "peerDependencies": {
+    "@larksuiteoapi/node-sdk": ">=1.0",
+    "@line/bot-sdk": ">=9.0",
+    "@slack/bolt": ">=3.18",
+    "botbuilder": ">=4.22",
+    "discord.js": ">=14.0",
+    "grammy": ">=1.20",
+    "irc-framework": ">=4.0",
+    "matrix-bot-sdk": ">=0.7",
+    "mattermost-client": ">=1.0",
+    "nostr-tools": ">=2.0",
+    "tmi.js": ">=1.8",
+    "whatsapp-web.js": ">=1.23"
+  },
+  "peerDependenciesMeta": {
+    "grammy": {
+      "optional": true
+    },
+    "discord.js": {
+      "optional": true
+    },
+    "@slack/bolt": {
+      "optional": true
+    },
+    "whatsapp-web.js": {
+      "optional": true
+    },
+    "matrix-bot-sdk": {
+      "optional": true
+    },
+    "botbuilder": {
+      "optional": true
+    },
+    "@line/bot-sdk": {
+      "optional": true
+    },
+    "@larksuiteoapi/node-sdk": {
+      "optional": true
+    },
+    "mattermost-client": {
+      "optional": true
+    },
+    "nostr-tools": {
+      "optional": true
+    },
+    "irc-framework": {
+      "optional": true
+    },
+    "tmi.js": {
+      "optional": true
+    }
+  }
+}
