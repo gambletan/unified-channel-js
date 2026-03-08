@@ -29,7 +29,7 @@ export class ChannelManager {
     channel: string,
     chatId: string,
     text: string,
-    options?: { replyToId?: string; parseMode?: string }
+    options?: { replyToId?: string; parseMode?: string; buttons?: import("./types.js").Button[][] }
   ): Promise<string | undefined> {
     const adapter = this.channels.get(channel);
     if (!adapter) throw new Error(`Channel not registered: ${channel}`);
@@ -38,6 +38,7 @@ export class ChannelManager {
       text,
       replyToId: options?.replyToId,
       parseMode: options?.parseMode,
+      buttons: options?.buttons,
     });
   }
 
@@ -46,7 +47,10 @@ export class ChannelManager {
     chatIds: Record<string, string>
   ): Promise<void> {
     const tasks = Object.entries(chatIds).map(([channel, chatId]) =>
-      this.send(channel, chatId, text).catch(() => undefined)
+      this.send(channel, chatId, text).catch((err) => {
+        console.error(`broadcast failed for channel "${channel}" (chat ${chatId}):`, err);
+        return undefined;
+      })
     );
     await Promise.all(tasks);
   }

@@ -83,6 +83,20 @@ export interface ChannelConfig {
   };
 }
 
+/** Known adapter class name mappings for multi-word channel names. */
+const ADAPTER_CLASS_NAMES: Record<string, string> = {
+  googlechat: "GoogleChatAdapter",
+  msteams: "MsTeamsAdapter",
+  whatsapp: "WhatsAppAdapter",
+  bluebubbles: "BlueBubblesAdapter",
+  voicecall: "VoiceCallAdapter",
+};
+
+/** Derive the adapter class name from a channel name, using known mappings or simple PascalCase fallback. */
+function adapterClassName(channelName: string): string {
+  return ADAPTER_CLASS_NAMES[channelName] ?? channelName.charAt(0).toUpperCase() + channelName.slice(1) + "Adapter";
+}
+
 /**
  * Load a ChannelManager from a config file (YAML or JSON).
  *
@@ -115,7 +129,7 @@ export async function loadConfig(path?: string): Promise<ChannelManager> {
       try {
         const adapterModule = await import(`./adapters/${channelName}.js`);
         // Convention: adapter class is PascalCase(channelName) + "Adapter"
-        const className = channelName.charAt(0).toUpperCase() + channelName.slice(1) + "Adapter";
+        const className = adapterClassName(channelName);
         const AdapterClass = adapterModule[className];
         if (!AdapterClass) {
           throw new Error(`Adapter class ${className} not found in module`);
