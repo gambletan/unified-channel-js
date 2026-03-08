@@ -35,6 +35,31 @@ describe("StreamingReply", () => {
     const sr = StreamingReply.fromLLM(gen());
     expect(await sr.collect()).toBe("abc");
   });
+
+  it("collects empty async iterator to empty string", async () => {
+    async function* gen() {
+      // yields nothing
+    }
+    const sr = new StreamingReply(gen());
+    expect(await sr.collect()).toBe("");
+  });
+
+  it("fromLLM with all empty fields produces empty string", async () => {
+    async function* gen() {
+      yield { unrelated: "foo" };
+      yield { nope: "bar" };
+    }
+    const sr = StreamingReply.fromLLM(gen());
+    expect(await sr.collect()).toBe("");
+  });
+
+  it("collects single chunk", async () => {
+    async function* gen() {
+      yield "only";
+    }
+    const sr = new StreamingReply(gen());
+    expect(await sr.collect()).toBe("only");
+  });
 });
 
 describe("StreamingMiddleware", () => {
@@ -62,7 +87,6 @@ describe("StreamingMiddleware", () => {
     const msg = makeMsg({ metadata: { onTyping } });
     const next = vi.fn().mockResolvedValue("ok");
     await mw.process(msg, next);
-    // Should have fired at least once (immediately)
     expect(onTyping).toHaveBeenCalled();
   });
 
@@ -89,6 +113,56 @@ describe("StreamingMiddleware", () => {
     const msg = makeMsg({ metadata: { onTyping } });
     const next = vi.fn().mockRejectedValue(new Error("boom"));
     await expect(mw.process(msg, next)).rejects.toThrow("boom");
-    // Typing timer should be cleaned up (no lingering interval)
+  });
+
+  it("handles empty streaming reply", async () => {
+    const mw = new StreamingMiddleware();
+    async function* gen() {
+      // empty
+    }
+    const next = vi.fn().mockResolvedValue(new StreamingReply(gen()));
+    const result = await mw.process(makeMsg(), next);
+    expect(result).toBe("");
+  });
+
+  it("error during iteration propagates", async () => {
+    const mw = new StreamingMiddleware();
+    async function* gen() {
+      yield "ok";
+      throw new Error("stream error");
+    }
+    const next = vi.fn().mockResolvedValue(new StreamingReply(gen()));
+    await expect(mw.process(makeMsg(), next)).rejects.toThrow("stream error");
+  });
+
+  it("onChunk callback with multiple chunks accumulates correctly", async () => {
+    const mw = new StreamingMiddleware();
+    const chunks: string[] = [];
+    async function* gen() {
+      yield "Hello";
+      yield " ";
+      yield "World";
+      yield "!";
+    }
+    const msg = makeMsg({ metadata: { onChunk: (c: string) => chunks.push(c) } });
+    const next = vi.fn().mockResolvedValue(new StreamingReply(gen()));
+    const result = await mw.process(msg, next);
+    expect(result).toBe("Hello World!");
+    expect(chunks).toEqual(["Hello", " ", "World", "!"]);
+  });
+
+  it("passes through null results", async () => {
+    const mw = new StreamingMiddleware();
+    const next = vi.fn().mockResolvedValue(null);
+    const result = await mw.process(makeMsg(), next);
+    expect(result).toBeNull();
+  });
+
+  it("passes through OutboundMessage results", async () => {
+    const mw = new StreamingMiddleware();
+    const outbound = { chatId: "c1", text: "hi" };
+    const next = vi.fn().mockResolvedValue(outbound);
+    const result = await mw.process(makeMsg(), next);
+    expect(result).toBe(outbound);
   });
 });
