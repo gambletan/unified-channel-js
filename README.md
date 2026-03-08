@@ -1,9 +1,34 @@
 # unified-channel (Node.js/TypeScript)
 
-> 19 messaging channels, 1 unified API. TypeScript-first, zero required dependencies.
+> **The missing messaging layer for AI Agents.**
+> Connect your agent to Telegram, Discord, Slack, WhatsApp, and 15 more channels — with one unified API.
+
+19 messaging channels, 1 unified API. TypeScript-first, zero required dependencies.
+
+Whether you're building an AI assistant, a chatbot, or any agent that needs to talk to humans across platforms — `unified-channel` gives you a single interface to send and receive messages everywhere.
 
 ```
 npm install unified-channel
+```
+
+## Why AI Agents Need This
+
+Most AI agent frameworks handle reasoning well but leave messaging as an afterthought. `unified-channel` fills that gap:
+
+- **One integration, every platform** — write your agent logic once, deploy to 19 channels
+- **Middleware pipeline** — add access control, command routing, rate limiting, or custom processing
+- **Channel-agnostic** — your agent code never touches platform-specific SDKs
+- **Zero lock-in** — add or remove channels without changing agent logic
+
+```
+┌─────────────┐     ┌──────────────────────────────────────────────┐     ┌─────────────┐
+│  Telegram   │────▶│                                              │     │             │
+│  Discord    │────▶│         unified-channel middleware           │────▶│  Your AI    │
+│  Slack      │────▶│                                              │     │  Agent      │
+│  WhatsApp   │────▶│  AccessMiddleware → CommandMiddleware → ...  │◀────│             │
+│  + 15 more  │◀────│                                              │     │             │
+└─────────────┘     └──────────────────────────────────────────────┘     └─────────────┘
+     Users              Inbound ──────────────────────▶ Outbound           Your Code
 ```
 
 ## Supported Channels
@@ -180,10 +205,13 @@ manager.shutdown()                // Disconnect all channels
 npm test
 ```
 
-## Also Available
+## Also Available In
 
-- **Python**: [unified-channel](https://github.com/gambletan/unified-channel) (same 19 channels)
-- **Java**: [unified-channel-java](https://github.com/gambletan/unified-channel-java) (coming soon)
+| Language | Repository | Status |
+|----------|-----------|--------|
+| **Python** | [gambletan/unified-channel](https://github.com/gambletan/unified-channel) | 19 channels |
+| **Java** | [gambletan/unified-channel-java](https://github.com/gambletan/unified-channel-java) | Coming soon |
+| **TypeScript** | You are here | 19 channels |
 
 ## License
 
