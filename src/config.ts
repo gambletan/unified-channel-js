@@ -101,7 +101,7 @@ export async function loadConfig(path?: string): Promise<ChannelManager> {
   if (configPath.endsWith(".json")) {
     // Parse JSON, then interpolate env vars in string values
     config = JSON.parse(content) as ChannelConfig;
-    interpolateObject(config);
+    interpolateObject(config as unknown as Record<string, unknown>);
   } else {
     // Parse as simple YAML
     config = parseSimpleYaml(content) as ChannelConfig;
