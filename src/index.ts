@@ -7,6 +7,10 @@ export type { ChannelAdapter } from "./adapter.js";
 export { ChannelManager } from "./manager.js";
 export type { Middleware } from "./middleware.js";
 export { AccessMiddleware, CommandMiddleware } from "./middleware.js";
+export { ServiceBridge, parseFlags } from "./bridge.js";
+export type { CommandHandler } from "./bridge.js";
+export { loadConfig, interpolateEnv, parseSimpleYaml } from "./config.js";
+export type { ChannelConfig } from "./config.js";
 
 // Adapters — lazy-loaded, import individually:
 //   import { TelegramAdapter } from "unified-channel/adapters/telegram"

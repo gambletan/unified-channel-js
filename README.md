@@ -184,6 +184,84 @@ npm install nostr-tools ws
 
 Channels like iMessage, Mattermost, Nextcloud, Synology, Zalo, BlueBubbles, and Google Chat use built-in `fetch`/`http`/WebSocket — no extra deps needed (Node 18+).
 
+## ServiceBridge — Remote Service Management
+
+`ServiceBridge` makes it dead simple to expose any service's operations as IM commands. Think of it as a CLI for your service, but over Telegram/Discord/Slack.
+
+```typescript
+import { ChannelManager, ServiceBridge } from "unified-channel";
+import { TelegramAdapter } from "unified-channel/adapters/telegram";
+
+const manager = new ChannelManager();
+manager.addChannel(new TelegramAdapter(process.env.BOT_TOKEN!));
+
+const bridge = new ServiceBridge(manager);
+
+bridge
+  .expose("deploy", async (args) => {
+    const env = args[0] ?? "staging";
+    // ... your deploy logic
+    return `Deployed to ${env}`;
+  }, { description: "Deploy the service" })
+
+  .expose("restart", async () => {
+    // ... restart logic
+    return "Service restarted";
+  }, { description: "Restart the service" })
+
+  .exposeStatus(async () => {
+    return "CPU: 23% | Memory: 512MB | Uptime: 3d";
+  })
+
+  .exposeLogs(async (args) => {
+    const lines = args[0] ?? "20";
+    // ... fetch logs
+    return `Last ${lines} log lines...`;
+  });
+
+await bridge.run();
+```
+
+Now from Telegram:
+```
+/help              → lists all commands
+/deploy prod       → "Deployed to prod"
+/status            → "CPU: 23% | Memory: 512MB | Uptime: 3d"
+/logs 50           → last 50 log lines
+```
+
+Features:
+- **Auto /help generation** from registered commands
+- **Sync or async handlers** — return a string or `Promise<string>`
+- **Error handling** — exceptions are caught and returned as error messages
+- **Flag parsing** — use `parseFlags(args)` for `--key=value` and `--flag` support
+- **Fluent API** — chain `.expose()` calls
+- **Built-in /status, /logs, /help** commands
+
+### Config File Support
+
+Load a `ChannelManager` from a YAML or JSON config file with env var interpolation:
+
+```yaml
+# unified-channel.yml
+channels:
+  telegram:
+    token: "${UC_TELEGRAM_TOKEN}"
+  discord:
+    token: "${UC_DISCORD_TOKEN}"
+```
+
+```typescript
+import { loadConfig, ServiceBridge } from "unified-channel";
+
+const manager = await loadConfig("./unified-channel.yml");
+const bridge = new ServiceBridge(manager);
+// ... expose commands ...
+await bridge.run();
+```
+
+Supported formats: `.yml`, `.yaml`, `.json`. Environment variables use `${VAR}` syntax with optional defaults: `${VAR:-fallback}`.
+
 ## API Reference
 
 ### ChannelManager
