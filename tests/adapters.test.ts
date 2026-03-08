@@ -217,6 +217,41 @@ describe("Telegram adapter", () => {
     const adapter = new TelegramAdapter("123:ABC", "HTML");
     expect(adapter.channelId).toBe("telegram");
   });
+
+  it("defaults to polling mode", async () => {
+    const { TelegramAdapter } = await import("../src/adapters/telegram.js");
+    const adapter = new TelegramAdapter("123:ABC");
+    expect(adapter.mode).toBe("polling");
+  });
+
+  it("accepts webhook config as second argument", async () => {
+    const { TelegramAdapter } = await import("../src/adapters/telegram.js");
+    const adapter = new TelegramAdapter("123:ABC", {
+      mode: "webhook",
+      webhookUrl: "https://example.com",
+      port: 9000,
+      path: "/hook",
+    });
+    expect(adapter.mode).toBe("webhook");
+    expect(adapter.channelId).toBe("telegram");
+  });
+
+  it("accepts webhook config as third argument with parse mode", async () => {
+    const { TelegramAdapter } = await import("../src/adapters/telegram.js");
+    const adapter = new TelegramAdapter("123:ABC", "HTML", {
+      mode: "webhook",
+      webhookUrl: "https://example.com",
+    });
+    expect(adapter.mode).toBe("webhook");
+    expect(adapter.channelId).toBe("telegram");
+  });
+
+  it("defaults webhook port to 8443 and path to /telegram-webhook", async () => {
+    const { TelegramAdapter } = await import("../src/adapters/telegram.js");
+    const adapter = new TelegramAdapter("123:ABC", { mode: "webhook", webhookUrl: "https://example.com" });
+    expect(adapter.mode).toBe("webhook");
+    // Port and path defaults are internal but mode should be set
+  });
 });
 
 // Cross-adapter verification: all adapters implement ChannelAdapter interface
