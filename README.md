@@ -127,6 +127,8 @@ interface Middleware {
 Built-in middleware:
 - **AccessMiddleware** — allowlist by sender ID (silent drop on unauthorized)
 - **CommandMiddleware** — route `/commands` to registered handlers
+- **ConversationMemory** — track conversation history per chat (pluggable store)
+- **StreamingMiddleware** — typing indicators + streaming reply collection
 
 ### ChannelAdapter
 
@@ -276,6 +278,101 @@ manager.getStatus()               // Get all channel statuses
 manager.run()                     // Connect all channels and start listening
 manager.shutdown()                // Disconnect all channels
 ```
+
+## ConversationMemory
+
+Track conversation history per chat so your agent can maintain context across messages.
+
+```typescript
+import { ChannelManager, ConversationMemory } from "unified-channel";
+
+const manager = new ChannelManager();
+
+// Add memory middleware (default: in-memory store, 50 turns max)
+manager.addMiddleware(new ConversationMemory({ maxTurns: 20 }));
+
+manager.onMessage(async (msg) => {
+  // History is injected into metadata by the middleware
+  const history = msg.metadata?.history as Array<{ role: string; content: string }>;
+  console.log(`${history.length} previous messages in this chat`);
+  return `You said: ${msg.content.text}`;
+});
+```
+
+Bring your own store by implementing `MemoryStore`:
+
+```typescript
+import { ConversationMemory, type MemoryStore, type HistoryEntry } from "unified-channel";
+
+class RedisStore implements MemoryStore {
+  async get(key: string): Promise<HistoryEntry[]> { /* ... */ }
+  async append(key: string, entry: HistoryEntry): Promise<void> { /* ... */ }
+  async trim(key: string, maxEntries: number): Promise<void> { /* ... */ }
+  async clear(key: string): Promise<void> { /* ... */ }
+}
+
+manager.addMiddleware(new ConversationMemory({ store: new RedisStore() }));
+```
+
+## RichReply
+
+Build rich, cross-platform replies with a fluent API. Automatically degrades to plain text for unsupported channels.
+
+```typescript
+import { RichReply } from "unified-channel";
+
+const reply = new RichReply()
+  .text("Server Status")
+  .divider()
+  .table(["Service", "Status"], [["API", "OK"], ["DB", "Slow"]])
+  .code('const health = await check();', "typescript")
+  .buttons([[
+    { label: "Restart", callbackData: "restart" },
+    { label: "Docs", url: "https://docs.example.com" },
+  ]]);
+
+// Platform-specific rendering
+reply.toTelegram();   // { text: "...", parse_mode: "HTML", reply_markup: {...} }
+reply.toDiscord();    // { content: "...", embeds: [...], components: [...] }
+reply.toSlack();      // { blocks: [...] }
+reply.toPlainText();  // Universal fallback
+
+// Or auto-pick based on channel:
+const outbound = reply.toOutbound("telegram"); // OutboundMessage
+```
+
+## StreamingMiddleware
+
+Handle streaming LLM responses with typing indicators and chunk-by-chunk delivery.
+
+```typescript
+import { ChannelManager, StreamingMiddleware, StreamingReply } from "unified-channel";
+
+const manager = new ChannelManager();
+manager.addMiddleware(new StreamingMiddleware({ typingInterval: 3000 }));
+
+manager.onMessage(async (msg) => {
+  // Return a StreamingReply from an async generator
+  async function* generate() {
+    yield "Thinking";
+    yield "...";
+    yield " Here is the answer.";
+  }
+  return new StreamingReply(generate());
+});
+
+// Works with LLM SDKs too:
+manager.onMessage(async (msg) => {
+  const stream = await openai.chat.completions.create({
+    model: "gpt-4",
+    messages: [{ role: "user", content: msg.content.text }],
+    stream: true,
+  });
+  return StreamingReply.fromLLM(stream);
+});
+```
+
+The middleware collects all chunks into a final string reply. Optionally provide `onTyping` and `onChunk` callbacks via `msg.metadata` for real-time UI updates.
 
 ## Testing
 

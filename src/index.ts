@@ -12,6 +12,17 @@ export type { CommandHandler } from "./bridge.js";
 export { loadConfig, interpolateEnv, parseSimpleYaml } from "./config.js";
 export type { ChannelConfig } from "./config.js";
 
+// Memory
+export { ConversationMemory, InMemoryStore } from "./memory.js";
+export type { MemoryStore, HistoryEntry, ConversationMemoryOptions } from "./memory.js";
+
+// Rich Reply
+export { RichReply } from "./rich.js";
+
+// Streaming
+export { StreamingMiddleware, StreamingReply } from "./streaming.js";
+export type { StreamingMiddlewareOptions } from "./streaming.js";
+
 // Adapters — lazy-loaded, import individually:
 //   import { TelegramAdapter } from "unified-channel/adapters/telegram"
 export { TelegramAdapter } from "./adapters/telegram.js";
