@@ -1,58 +1,106 @@
-# unified-channel (Node.js/TypeScript)
+<div align="center">
 
-> **The missing messaging layer for AI Agents.**
-> Connect your agent to Telegram, Discord, Slack, WhatsApp, and 15 more channels — with one unified API.
+# unified-channel
 
-19 messaging channels, 1 unified API. TypeScript-first, zero required dependencies.
+### 19 Channels. 1 API. Ship Your AI Agent Everywhere.
 
-Whether you're building an AI assistant, a chatbot, or any agent that needs to talk to humans across platforms — `unified-channel` gives you a single interface to send and receive messages everywhere.
+[![npm](https://img.shields.io/npm/v/unified-channel?color=red&label=npm)](https://www.npmjs.com/package/unified-channel)
+[![PyPI](https://img.shields.io/pypi/v/unified-channel?color=blue&label=PyPI)](https://pypi.org/project/unified-channel/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
+[![TypeScript](https://img.shields.io/badge/TypeScript-first-blue.svg)](https://typescriptlang.org)
+[![Tests](https://img.shields.io/badge/Tests-256%20passing-brightgreen.svg)]()
+
+**Stop writing platform-specific bot code.** Write your agent once, deploy to every messaging platform your users are on.
+
+[Get Started](#quick-start) | [19 Adapters](#supported-channels) | [Middleware](#middleware) | [API Docs](#api-reference)
+
+</div>
+
+---
+
+### The problem
+
+You build a Telegram bot. Then your team uses Slack. Clients want WhatsApp. Discord community needs it too. Now you're maintaining 4 codebases doing the same thing with 4 different APIs.
+
+### The solution
 
 ```
 npm install unified-channel
 ```
 
-## Why AI Agents Need This
+```typescript
+const manager = new ChannelManager();
+manager.addChannel(new TelegramAdapter("BOT_TOKEN"));
+manager.addChannel(new DiscordAdapter("BOT_TOKEN"));
+manager.addChannel(new SlackAdapter("xoxb-...", "xapp-..."));
 
-Most AI agent frameworks handle reasoning well but leave messaging as an afterthought. `unified-channel` fills that gap:
-
-- **One integration, every platform** — write your agent logic once, deploy to 19 channels
-- **Middleware pipeline** — add access control, command routing, rate limiting, or custom processing
-- **Channel-agnostic** — your agent code never touches platform-specific SDKs
-- **Zero lock-in** — add or remove channels without changing agent logic
-
+manager.onMessage(async (msg) => {
+  // msg.channel === "telegram" | "discord" | "slack" | ...
+  // Same code handles all of them
+  return await myAgent.chat(msg.content.text);
+});
 ```
-┌─────────────┐     ┌──────────────────────────────────────────────┐     ┌─────────────┐
-│  Telegram   │────▶│                                              │     │             │
-│  Discord    │────▶│         unified-channel middleware           │────▶│  Your AI    │
-│  Slack      │────▶│                                              │     │  Agent      │
-│  WhatsApp   │────▶│  AccessMiddleware → CommandMiddleware → ...  │◀────│             │
-│  + 15 more  │◀────│                                              │     │             │
-└─────────────┘     └──────────────────────────────────────────────┘     └─────────────┘
-     Users              Inbound ──────────────────────▶ Outbound           Your Code
-```
+
+### Why unified-channel
+
+| | Without | With unified-channel |
+|---|---|---|
+| **Add a channel** | New SDK, new message format, new auth flow | `manager.addChannel(new XAdapter(...))` |
+| **Auth/rate-limit** | Implement per-platform | `addMiddleware(new AccessMiddleware(...))` — works everywhere |
+| **Send from backend** | Different API per channel | `await manager.send("telegram", chatId, text)` |
+| **New adapter** | Days of work | 1 file, 5 methods |
+
+### Built-in batteries
+
+| Feature | What it does |
+|---|---|
+| **AccessMiddleware** | Allowlist users across all channels |
+| **CommandMiddleware** | `/command` routing with argument parsing |
+| **RateLimitMiddleware** | Sliding window per-user rate limiting |
+| **ConversationMemory** | Per-chat history (InMemory / SQLite / Redis) |
+| **StreamingMiddleware** | Typing indicators + chunked LLM delivery |
+| **RichReply** | Tables, buttons, code blocks — auto-degrades per platform |
+| **ServiceBridge** | Expose any function as a chat command in 1 line |
+| **Scheduler** | Cron + interval periodic tasks |
+| **Dashboard** | Built-in web UI with message log + API |
+| **I18nMiddleware** | Locale detection + translation helpers |
+| **VoiceMiddleware** | STT/TTS (OpenAI Whisper + TTS) |
+| **YAML/JSON Config** | Load channels from config file, env var interpolation |
+
+TypeScript-first. Zero required dependencies. Tree-shakeable — only import what you use.
+
+### Also available in
+
+| Language | Package | Install |
+|---|---|---|
+| **TypeScript** | [unified-channel](https://www.npmjs.com/package/unified-channel) | `npm install unified-channel` |
+| **Python** | [unified-channel](https://pypi.org/project/unified-channel/) | `pip install unified-channel` |
+| **Java** | [unified-channel-java](https://github.com/gambletan/unified-channel-java) | Maven / Gradle |
+
+---
 
 ## Supported Channels
 
-| Channel | Adapter | SDK/Protocol |
-|---------|---------|-------------|
-| Telegram | `TelegramAdapter` | grammy |
-| Discord | `DiscordAdapter` | discord.js |
-| Slack | `SlackAdapter` | @slack/bolt |
-| WhatsApp | `WhatsAppAdapter` | whatsapp-web.js |
-| iMessage | `IMessageAdapter` | macOS native (SQLite + AppleScript) |
-| Matrix | `MatrixAdapter` | matrix-bot-sdk |
-| MS Teams | `MSTeamsAdapter` | botbuilder + express |
-| LINE | `LineAdapter` | @line/bot-sdk + express |
-| Feishu/Lark | `FeishuAdapter` | @larksuiteoapi/node-sdk |
-| Mattermost | `MattermostAdapter` | WebSocket + fetch |
-| Google Chat | `GoogleChatAdapter` | Service account JWT + REST |
-| Nextcloud Talk | `NextcloudAdapter` | REST polling |
-| Synology Chat | `SynologyAdapter` | Webhook + REST |
-| Zalo | `ZaloAdapter` | Zalo OA API webhook |
-| Nostr | `NostrAdapter` | nostr-tools + WebSocket |
-| BlueBubbles | `BlueBubblesAdapter` | REST polling |
-| Twitch | `TwitchAdapter` | tmi.js |
-| IRC | `IRCAdapter` | irc-framework |
+| Channel | Adapter | Mode | Public URL |
+|---------|---------|------|-----------|
+| Telegram | `TelegramAdapter` | Polling / Webhook | No |
+| Discord | `DiscordAdapter` | WebSocket | No |
+| Slack | `SlackAdapter` | Socket Mode | No |
+| WhatsApp | `WhatsAppAdapter` | Webhook | Yes |
+| iMessage | `IMessageAdapter` | DB polling (macOS) | No |
+| Matrix | `MatrixAdapter` | Sync | No |
+| MS Teams | `MSTeamsAdapter` | Webhook | Yes |
+| LINE | `LineAdapter` | Webhook | Yes |
+| Feishu/Lark | `FeishuAdapter` | Webhook | Yes |
+| Mattermost | `MattermostAdapter` | WebSocket | No |
+| Google Chat | `GoogleChatAdapter` | Webhook | Yes |
+| Nextcloud Talk | `NextcloudAdapter` | Polling | No |
+| Synology Chat | `SynologyAdapter` | Webhook | Yes |
+| Zalo | `ZaloAdapter` | Webhook | Yes |
+| Nostr | `NostrAdapter` | WebSocket (relay) | No |
+| BlueBubbles | `BlueBubblesAdapter` | Polling | No |
+| Twitch | `TwitchAdapter` | IRC/WebSocket | No |
+| IRC | `IRCAdapter` | TCP socket | No |
 
 ## Quick Start
 
