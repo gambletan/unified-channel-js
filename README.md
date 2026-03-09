@@ -312,6 +312,83 @@ await bridge.run();
 
 Supported formats: `.yml`, `.yaml`, `.json`. Environment variables use `${VAR}` syntax with optional defaults: `${VAR:-fallback}`.
 
+---
+
+## AI Agent Integration
+
+Connect Claude (or any LLM) to Telegram — users chat naturally, and the agent works in your project directory:
+
+```typescript
+import { ChannelManager, TelegramAdapter, AccessMiddleware,
+         CommandMiddleware, RateLimitMiddleware } from "unified-channel";
+import { spawn } from "child_process";
+
+const manager = new ChannelManager();
+manager.addChannel(new TelegramAdapter(process.env.TELEGRAM_TOKEN!));
+manager.addMiddleware(new AccessMiddleware({ allowedUserIds: new Set([process.env.ADMIN_ID!]) }));
+manager.addMiddleware(new RateLimitMiddleware({ maxMessages: 30, windowSeconds: 60 }));
+
+const cmds = new CommandMiddleware();
+manager.addMiddleware(cmds);
+
+const histories = new Map<string, Array<{ role: string; content: string }>>();
+const tasks = new Map<string, ReturnType<typeof spawn>>();
+
+// Chat with Claude via CLI — runs in your project directory
+async function callClaude(text: string, chatId: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const proc = spawn("claude", ["--print", "--model", "claude-sonnet-4-20250514"], {
+      cwd: process.env.WORK_DIR || process.cwd(),
+      env: { ...process.env, CLAUDECODE: undefined },
+    });
+    tasks.set(chatId, proc);
+
+    let stdout = "";
+    proc.stdout.on("data", (d) => (stdout += d));
+    proc.stdin.write(text);
+    proc.stdin.end();
+    proc.on("close", (code) => {
+      tasks.delete(chatId);
+      code === 0 ? resolve(stdout.trim()) : reject(new Error("CLI error"));
+    });
+    setTimeout(() => { proc.kill(); reject(new Error("timeout")); }, 120_000);
+  });
+}
+
+cmds.register("stop", async (msg) => {
+  const proc = tasks.get(msg.chatId!);
+  if (proc) { proc.kill(); return "Stopped."; }
+  return "No active task.";
+});
+
+cmds.register("clear", async (msg) => {
+  histories.delete(msg.chatId!);
+  return "History cleared.";
+});
+
+manager.onMessage(async (msg) => {
+  const chatId = msg.chatId || "default";
+  const history = histories.get(chatId) || [];
+  history.push({ role: "user", content: msg.content.text! });
+  histories.set(chatId, history.slice(-40));
+
+  await manager.send("telegram", chatId, "💭 Thinking...");
+  const reply = await callClaude(msg.content.text!, chatId);
+  history.push({ role: "assistant", content: reply });
+  return reply;
+});
+
+await manager.run();
+```
+
+**What this gives you:**
+- Chat with Claude via Telegram — Claude can read/edit your project files
+- `/stop` kills long-running tasks, `/clear` resets history
+- Rate limiting + access control built in
+- Set `WORK_DIR` to point Claude at any project
+
+---
+
 ## API Reference
 
 ### ChannelManager
